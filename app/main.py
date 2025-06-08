@@ -128,5 +128,11 @@ async def get_categories():
 async def health_check():
     return {"status": "healthy", "message": "API is running"}
 
+# Add a redirect for the /legal-qa endpoint
+@app.post("/legal-qa")
+async def legal_qa_redirect(request: QuestionRequest):
+    """Redirect for /legal-qa to maintain compatibility with frontend."""
+    return await answer_question(request)
+
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True) 
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
