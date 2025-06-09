@@ -1,0 +1,141 @@
+# LAWAI_BACKEND - Legal AI Question Answering System
+
+## Project Overview
+LAWAI_BACKEND is a FastAPI-based REST API that provides legal question answering capabilities. The system matches user questions with a pre-defined database of legal questions and answers, focusing on Indian law.
+
+## Project Structure
+```
+lawai_backend/
+├── app/
+│   ├── __init__.py
+│   ├── main.py        # Main FastAPI application
+│   └── storage.py     # Data storage and retrieval logic
+├── data/
+│   └── qa_data.json   # Legal QA pairs database
+├── models/
+│   ├── __init__.py
+│   ├── qa_model.py
+│   └── document_analyzer.py
+├── requirements.txt    # Project dependencies
+└── vercel.json        # Vercel deployment configuration
+```
+
+## Key Components
+
+### 1. FastAPI Application (app/main.py)
+- Main entry point for the API
+- Implements RESTful endpoints:
+  * POST /legal-qa - Main endpoint for legal questions
+  * GET /api/qa-pairs - Retrieve QA pairs with optional category filtering
+  * GET /api/categories - Get available question categories
+  * GET /health - Health check endpoint
+- Features:
+  * Input validation using Pydantic models
+  * CORS configuration for frontend integration
+  * Error handling and response formatting
+  * Request sanitization and validation
+  * Rate limiting and parameter validation
+
+### 2. Storage System (app/storage.py)
+- Manages data storage and retrieval
+- Features:
+  * In-memory storage for serverless deployment
+  * Advanced question matching using SequenceMatcher
+  * Text cleaning and normalization
+  * Case-insensitive search
+  * Category management
+  * Data validation and error handling
+
+### 3. Data Structure (data/qa_data.json)
+- Contains legal QA pairs with:
+  * Unique IDs
+  * Questions and answers
+  * Categories
+  * Creation timestamps
+- Organized by legal topics:
+  * Constitutional law
+  * Criminal law
+  * Civil law
+  * Family law
+  * Property law
+  * And more...
+
+### 4. Deployment Configuration (vercel.json)
+- Serverless deployment setup for Vercel
+- Route configurations:
+  * API endpoints routing
+  * CORS headers
+  * HTTP methods
+- Environment configuration
+
+## API Endpoints
+
+1. POST /legal-qa
+   - Purpose: Answer legal questions
+   - Input: JSON with question field
+   - Output: Answer, confidence score, and category
+   - Features:
+     * Question sanitization
+     * Similarity matching
+     * Confidence scoring
+
+2. GET /api/qa-pairs
+   - Purpose: Retrieve QA pairs
+   - Parameters:
+     * category (optional)
+     * limit (1-100, default: 10)
+   - Output: List of QA pairs with total count
+
+3. GET /api/categories
+   - Purpose: Get available categories
+   - Output: List of unique categories with total count
+
+## Security Features
+- Input validation and sanitization
+- CORS protection
+- Request size limits
+- Error handling
+- Rate limiting
+- Parameter validation
+
+## Performance Optimizations
+- In-memory data storage
+- Efficient text matching
+- Response caching
+- Optimized data structures
+- Minimal dependencies
+
+## Integration
+- Frontend integration via CORS
+- RESTful API design
+- JSON response format
+- Error handling
+- Status codes
+
+## Dependencies
+- fastapi==0.104.1
+- uvicorn==0.24.0
+- pydantic==2.5.2
+- python-dotenv==1.0.0
+- requests==2.31.0
+
+## Deployment
+- Serverless deployment on Vercel
+- Python runtime
+- Environment variables
+- API routing
+- CORS configuration
+
+## Error Handling
+- Input validation errors
+- Processing errors
+- Not found responses
+- Server errors
+- Detailed error messages
+
+## Future Improvements
+1. Enhanced question matching using ML/AI
+2. Database integration for scalability
+3. User authentication and rate limiting
+4. Caching layer for improved performance
+5. Additional legal document analysis features

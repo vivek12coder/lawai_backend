@@ -141,6 +141,13 @@
       "created_at": "2024-03-20T10:00:00Z"
     },
     {
+      "id": 334,
+      "question": "section 420 ",
+      "answer": "Section 420 of the Indian Penal Code (IPC) deals with cheating and dishonestly inducing delivery of property. It states that whoever cheats and thereby dishonestly induces the person deceived to deliver any property to any person, or to make, alter or destroy the whole or any part of a valuable security, or anything which is signed or sealed, and which is capable of being converted into a valuable security, shall be punished with imprisonment of either description for a term which may extend to seven years, and shall also be liable to fine.",
+      "category": "criminal_law",
+      "created_at": "2024-03-20T10:00:00Z"
+    },
+    {
       "id": 215,
       "question": "What are the requirements for filing a patent in India?",
       "answer": "To file a patent in India, you need: 1) A complete patent specification describing the invention in detail, 2) Forms 1, 2, 3, 5, and 26, 3) Proof of right to file, 4) Priority document (if claiming priority), 5) Abstract of the invention, 6) Drawings if necessary, 7) Filing fees as prescribed. The invention must be novel, non-obvious, and have industrial applicability. The application can be filed at the Indian Patent Office either online or offline.",
@@ -162,8 +169,22 @@
         "created_at": "2025-06-07T15:20:00Z"
       },
       {
+        "id": 333,
+        "question": "right to life?",
+        "answer": "The right to life is the fundamental right to live with dignity, protected under Article 21 of the Indian Constitution and Article 3 of the Universal Declaration of Human Rights (UDHR).",
+        "category": "human_rights",
+        "created_at": "2025-06-07T15:20:00Z"
+      },
+      {
         "id": 2,
         "question": "What is the right to equality?",
+        "answer": "The right to equality ensures that all individuals are treated equally before the law and prohibits discrimination, as per Article 14 of the Indian Constitution and Article 7 of the UDHR.",
+        "category": "human_rights",
+        "created_at": "2025-06-07T15:20:00Z"
+      },
+      {
+        "id": 335,
+        "question": "right to equality?",
         "answer": "The right to equality ensures that all individuals are treated equally before the law and prohibits discrimination, as per Article 14 of the Indian Constitution and Article 7 of the UDHR.",
         "category": "human_rights",
         "created_at": "2025-06-07T15:20:00Z"
@@ -178,6 +199,13 @@
       {
         "id": 4,
         "question": "What is the right to education?",
+        "answer": "Everyone has the right to free and compulsory education, especially at the elementary level, under Article 21A of the Indian Constitution and Article 26 of the UDHR.",
+        "category": "human_rights",
+        "created_at": "2025-06-07T15:20:00Z"
+      },
+      {
+        "id": 433,
+        "question": "right to education",
         "answer": "Everyone has the right to free and compulsory education, especially at the elementary level, under Article 21A of the Indian Constitution and Article 26 of the UDHR.",
         "category": "human_rights",
         "created_at": "2025-06-07T15:20:00Z"
