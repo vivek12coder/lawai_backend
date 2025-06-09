@@ -65,7 +65,7 @@ async def legal_qa(request: QuestionRequest):
         if not similar_questions:
             return {
                 "answer": "I apologize, but I couldn't find a suitable answer to your question. Please try rephrasing your question or ask something else.",
-                "confidence": 0
+                "confidence or data not found..": 0
             }
         
         best_match = similar_questions[0]
