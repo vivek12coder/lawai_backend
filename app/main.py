@@ -10,7 +10,8 @@ from .storage import JSONStorage
 app = FastAPI(
     title="Legal AI System",
     description="API for legal document analysis and question answering",
-    version="1.0.0"
+    version="1.0.0",
+    root_path=""  # This helps with path handling in serverless
 )
 
 # Configure CORS
@@ -22,7 +23,8 @@ origins = [
     "https://lawaichat-one.vercel.app",
     "https://lawaichat-one-git-main.vercel.app",
     "https://lawaichat-one-*.vercel.app",
-    "https://lawai-frontend-ten.vercel.app"
+    "https://lawai-frontend-ten.vercel.app",
+    "*"  # Allow all origins in development
 ]
 
 app.add_middleware(
