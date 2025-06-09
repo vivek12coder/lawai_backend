@@ -1,59 +1,38 @@
 import json
-import os
 from datetime import datetime
 from typing import Dict, List, Optional
-from pathlib import Path
+
+# Load the initial data
+INITIAL_DATA = {
+    "qa_pairs": [
+        {
+            "id": 1,
+            "question": "What is law?",
+            "answer": "Law is a system of rules created and enforced through social or governmental institutions to regulate behavior. In India, it encompasses constitutional law, statutory law, customary law, and case law.",
+            "category": "legal_basics",
+            "created_at": "2024-03-21T10:00:00Z"
+        },
+        {
+            "id": 2,
+            "question": "What is the Constitution of India?",
+            "answer": "The Constitution of India is the supreme law of India, adopted on 26th January 1950. It lays down the framework defining fundamental political principles and establishes the structure, procedures, powers, and duties of government institutions.",
+            "category": "constitutional_law",
+            "created_at": "2024-03-21T10:01:00Z"
+        }
+    ]
+}
 
 class JSONStorage:
     def __init__(self):
-        self.data_dir = Path(__file__).parent.parent / 'data'
-        self.qa_file = self.data_dir / 'qa_data.json'
-        self._ensure_data_file()
-
-    def _ensure_data_file(self):
-        """Ensure the data directory and file exist."""
-        self.data_dir.mkdir(exist_ok=True)
-        if not self.qa_file.exists():
-            self._save_data({"qa_pairs": []})
+        self._data = INITIAL_DATA
 
     def _load_data(self) -> Dict:
-        """Load data from JSON file."""
-        try:
-            with open(self.qa_file, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        except Exception as e:
-            print(f"Error loading data: {e}")
-            return {"qa_pairs": []}
+        """Load data from memory."""
+        return self._data
 
     def _save_data(self, data: Dict):
-        """Save data to JSON file."""
-        try:
-            with open(self.qa_file, 'w', encoding='utf-8') as f:
-                json.dump(data, f, indent=2, ensure_ascii=False)
-        except Exception as e:
-            print(f"Error saving data: {e}")
-
-    def add_qa_pair(self, question: str, answer: str, category: str = "general") -> Dict:
-        """Add a new Q&A pair."""
-        data = self._load_data()
-        
-        # Generate new ID
-        new_id = max([qa['id'] for qa in data['qa_pairs']], default=0) + 1
-        
-        # Create new Q&A pair
-        qa_pair = {
-            "id": new_id,
-            "question": question,
-            "answer": answer,
-            "category": category,
-            "created_at": datetime.utcnow().isoformat()
-        }
-        
-        # Add to data and save
-        data['qa_pairs'].append(qa_pair)
-        self._save_data(data)
-        
-        return qa_pair
+        """Save data to memory."""
+        self._data = data
 
     def get_qa_pairs(self, category: Optional[str] = None, limit: int = 10) -> List[Dict]:
         """Get Q&A pairs with optional category filter."""
@@ -65,13 +44,12 @@ class JSONStorage:
             qa_pairs = [qa for qa in qa_pairs if qa.get('category') == category]
         
         # Sort by creation date (newest first) and apply limit
-        # Handle cases where created_at might be missing
         def get_created_at(qa):
             try:
                 return qa.get('created_at', '')
             except:
                 return ''
-                
+        
         qa_pairs.sort(key=get_created_at, reverse=True)
         return qa_pairs[:limit]
 
@@ -91,4 +69,4 @@ class JSONStorage:
     def get_categories(self) -> List[str]:
         """Get all unique categories."""
         data = self._load_data()
-        return list(set(qa['category'] for qa in data['qa_pairs'])) 
+        return list(set(qa.get('category', '') for qa in data['qa_pairs'])) 
