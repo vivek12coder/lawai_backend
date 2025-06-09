@@ -21,7 +21,8 @@ origins = [
     "http://127.0.0.1:8000",
     "https://lawaichat-one.vercel.app",
     "https://lawaichat-one-git-main.vercel.app",
-    "https://lawaichat-one-*.vercel.app"
+    "https://lawaichat-one-*.vercel.app",
+    "https://lawai-frontend-ten.vercel.app"
 ]
 
 app.add_middleware(
