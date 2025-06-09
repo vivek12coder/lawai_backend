@@ -62,10 +62,17 @@ class JSONStorage:
         
         # Apply category filter if specified
         if category:
-            qa_pairs = [qa for qa in qa_pairs if qa['category'] == category]
+            qa_pairs = [qa for qa in qa_pairs if qa.get('category') == category]
         
         # Sort by creation date (newest first) and apply limit
-        qa_pairs.sort(key=lambda x: x['created_at'], reverse=True)
+        # Handle cases where created_at might be missing
+        def get_created_at(qa):
+            try:
+                return qa.get('created_at', '')
+            except:
+                return ''
+                
+        qa_pairs.sort(key=get_created_at, reverse=True)
         return qa_pairs[:limit]
 
     def find_similar_questions(self, question: str, threshold: float = 0.5) -> List[Dict]:
