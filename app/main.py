@@ -20,12 +20,18 @@ origins = [
     "http://127.0.0.1:8000",
     "https://lawaichat-one.vercel.app",
     "https://lawaichat-one-git-main.vercel.app",
-    "https://lawaichat-one-*.vercel.app"
+    "https://lawaichat-one-*.vercel.app",
+    "https://lawai-frontend-ten.vercel.app/",
+    "https://lawai-backend.vercel.app",
+    "https://lawai-frontend-viveks-projects-44c9f3e1.vercel.app/",
+    "https://lawai-backend-git-main-viveks-projects-44c9f3e1.vercel.app/",
+    "https://lawai-frontend-git-main-viveks-projects-44c9f3e1.vercel.app/",
+    "https://lawai-backend-57gzdym3e-viveks-projects-44c9f3e1.vercel.app/"
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins for now
+    allow_origins=origins,  # Use the defined origins instead of "*"
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -102,3 +108,8 @@ async def answer_question(request: QuestionRequest):
             status_code=500,
             detail=f"An error occurred while processing your request: {str(e)}"
         )
+
+@app.post("/legal-qa")
+async def legal_qa_redirect(request: QuestionRequest):
+    """Redirect for /legal-qa to maintain compatibility with frontend."""
+    return await answer_question(request)

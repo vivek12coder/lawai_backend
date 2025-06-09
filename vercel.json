@@ -8,6 +8,16 @@
   ],
   "routes": [
     {
+      "src": "/legal-qa",
+      "methods": ["POST", "OPTIONS"],
+      "dest": "app/main.py"
+    },
+    {
+      "src": "/api/(.*)",
+      "methods": ["GET", "POST", "OPTIONS"],
+      "dest": "app/main.py"
+    },
+    {
       "src": "/(.*)",
       "dest": "app/main.py"
     }
