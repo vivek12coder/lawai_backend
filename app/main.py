@@ -6,21 +6,6 @@ from typing import Optional, List
 import re
 import httpx
 import time
-import os
-import io
-import json
-from datetime import datetime
-
-# Optional heavy deps: only import if available
-try:
-    import PyPDF2  # type: ignore
-except Exception:  # pragma: no cover
-    PyPDF2 = None  # type: ignore
-
-try:
-    import docx  # python-docx
-except Exception:  # pragma: no cover
-    docx = None  # type: ignore
 
 from .storage import JSONStorage
 from .config import settings
@@ -55,102 +40,6 @@ app.add_middleware(
 
 # Initialize storage
 storage = JSONStorage()
-
-# Paths
-BASE_DIR = os.path.dirname(os.path.dirname(__file__))
-DATA_DIR = os.path.join(BASE_DIR, "data")
-DOCUMENTS_DB_PATH = os.path.join(DATA_DIR, "documents.json")
-
-
-def _ensure_documents_db():
-    try:
-        os.makedirs(DATA_DIR, exist_ok=True)
-        if not os.path.exists(DOCUMENTS_DB_PATH):
-            with open(DOCUMENTS_DB_PATH, "w", encoding="utf-8") as f:
-                json.dump({"documents": []}, f, ensure_ascii=False, indent=2)
-    except Exception:
-        # Likely read-only FS (e.g., serverless). We'll just skip persistence.
-        pass
-
-
-def _load_documents_db() -> dict:
-    try:
-        if os.path.exists(DOCUMENTS_DB_PATH):
-            with open(DOCUMENTS_DB_PATH, "r", encoding="utf-8") as f:
-                return json.load(f)
-    except Exception:
-        pass
-    return {"documents": []}
-
-
-def _save_documents_db(db: dict) -> bool:
-    try:
-        _ensure_documents_db()
-        with open(DOCUMENTS_DB_PATH, "w", encoding="utf-8") as f:
-            json.dump(db, f, ensure_ascii=False, indent=2)
-        return True
-    except Exception:
-        return False
-
-
-def extract_text_from_pdf(contents: bytes) -> str:
-    if PyPDF2 is None:
-        raise HTTPException(status_code=500, detail="PDF extraction not available: PyPDF2 not installed")
-    try:
-        reader = PyPDF2.PdfReader(io.BytesIO(contents))
-        texts = []
-        for page in reader.pages:
-            try:
-                txt = page.extract_text() or ""
-            except Exception:
-                txt = ""
-            if txt:
-                texts.append(txt)
-        return "\n".join(texts).strip()
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Failed to read PDF: {str(e)}")
-
-
-def extract_text_from_docx(contents: bytes) -> str:
-    if docx is None:
-        raise HTTPException(status_code=500, detail="DOCX extraction not available: python-docx not installed")
-    try:
-        document = docx.Document(io.BytesIO(contents))
-        paras = [p.text for p in document.paragraphs if p.text]
-        return "\n".join(paras).strip()
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Failed to read DOCX: {str(e)}")
-
-
-def extract_text_from_txt(contents: bytes, encoding_candidates: List[str] = ["utf-8", "utf-16", "latin-1"]) -> str:
-    for enc in encoding_candidates:
-        try:
-            return contents.decode(enc)
-        except Exception:
-            continue
-    # Fallback with errors replaced
-    return contents.decode("utf-8", errors="replace")
-
-
-def lightweight_summarize(text: str, max_chars: int = 600) -> str:
-    # Heuristic summary: first N characters with normalization
-    t = re.sub(r"\s+", " ", text).strip()
-    if len(t) <= max_chars:
-        return t
-    return t[: max_chars - 3] + "..."
-
-
-def lightweight_categorize(text: str) -> str:
-    t = text.lower()
-    if any(k in t for k in ["contract", "agreement", "party", "consideration", "breach"]):
-        return "contract_law"
-    if any(k in t for k in ["ipc", "crime", "criminal", "offence", "punishment"]):
-        return "criminal_law"
-    if any(k in t for k in ["constitution", "article", "fundamental right", "writ"]):
-        return "constitutional_law"
-    if any(k in t for k in ["property", "land", "tenancy", "ownership"]):
-        return "property_law"
-    return "general_legal"
 
 class QuestionRequest(BaseModel):
     question: str = Field(..., min_length=1, max_length=1000)
@@ -332,71 +221,23 @@ async def analyze_document(
                     detail=f"File too large. Maximum size is {settings.MAX_DOCUMENT_SIZE/(1024*1024)}MB"
                 )
         
-        # Determine type by content-type or filename
-        content_type = file.content_type or ""
-        filename = file.filename or "uploaded"
-        ext = os.path.splitext(filename)[1].lower()
-
-        # Validate supported types
-        if content_type not in settings.SUPPORTED_DOCUMENT_TYPES and ext not in [".pdf", ".txt", ".docx", ".doc"]:
+        # Check content type
+        content_type = file.content_type
+        if content_type not in settings.SUPPORTED_DOCUMENT_TYPES:
             raise HTTPException(
                 status_code=415,
-                detail=f"Unsupported file type: {content_type or ext}. Supported types: {', '.join(settings.SUPPORTED_DOCUMENT_TYPES)}"
+                detail=f"Unsupported file type: {content_type}. Supported types: {', '.join(settings.SUPPORTED_DOCUMENT_TYPES)}"
             )
-
-        # Extract text
-        text = ""
-        try:
-            if content_type == "application/pdf" or ext == ".pdf":
-                text = extract_text_from_pdf(contents)
-            elif content_type in ("application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/msword") or ext in (".docx", ".doc"):
-                text = extract_text_from_docx(contents)
-            elif content_type == "text/plain" or ext == ".txt":
-                text = extract_text_from_txt(contents)
-            else:
-                # Fallback: try text decode anyway
-                text = extract_text_from_txt(contents)
-        except HTTPException:
-            raise
-        except Exception as e:
-            raise HTTPException(status_code=400, detail=f"Failed to extract text: {str(e)}")
-
-        if not text or not text.strip():
-            raise HTTPException(status_code=400, detail="No extractable text found in the document")
-
-        # Lightweight analysis (avoid heavy models by default)
-        summary = lightweight_summarize(text)
-        category = lightweight_categorize(text)
-
-        # Build record
+        
+        # For now, return a simple response
+        # In a real implementation, you would process the document and extract meaningful information
         document_id = f"doc_{int(time.time())}"
-        record = {
-            "id": document_id,
-            "title": title.strip()[:200],
-            "filename": filename,
-            "content_type": content_type,
-            "summary": summary,
-            "category": category,
-            "text_length": len(text),
-            "uploaded_at": datetime.utcnow().isoformat() + "Z",
+        
+        return {
+            "summary": f"Analysis of {title}: This appears to be a legal document related to Indian law.",
+            "category": "general_legal",
+            "document_id": document_id
         }
-
-        # Persist (best-effort; may fail on read-only FS)
-        db = _load_documents_db()
-        docs = db.get("documents", [])
-        docs.insert(0, {**record, "text": text})  # store full text
-        db["documents"] = docs
-        saved = _save_documents_db(db)
-
-        resp = {
-            "summary": summary,
-            "category": category,
-            "document_id": document_id,
-            "saved": saved,
-        }
-        if not saved:
-            resp["warning"] = "Document could not be persisted (likely read-only deployment). Analysis returned anyway."
-        return resp
     except HTTPException as he:
         raise he
     except Exception as e:
