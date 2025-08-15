@@ -1,12 +1,22 @@
-from transformers import pipeline
 from typing import Dict, Optional
+
+try:
+    from transformers import pipeline  # type: ignore
+    _TRANSFORMERS_AVAILABLE = True
+except Exception:
+    pipeline = None  # type: ignore
+    _TRANSFORMERS_AVAILABLE = False
 
 class DocumentAnalyzer:
     """Class for analyzing legal documents using transformer models."""
     
     def __init__(self):
         """Initialize the document analyzer with required models."""
-        # Initialize transformers pipelines
+        # Initialize transformers pipelines if available
+        if not _TRANSFORMERS_AVAILABLE:
+            raise RuntimeError(
+                "transformers is not installed. Install 'transformers' to use DocumentAnalyzer."
+            )
         self.summarizer = pipeline(
             "summarization",
             model="facebook/bart-large-cnn",

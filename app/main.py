@@ -1,11 +1,13 @@
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from typing import Optional, List
 import re
+import httpx
 
 from .storage import JSONStorage
+from .config import settings
 
 app = FastAPI(
     title="Legal AI System",
@@ -19,8 +21,8 @@ origins = [
     "http://localhost:8000",
     "http://127.0.0.1:3000",
     "http://127.0.0.1:8000",
-   "https://lawai-frontend-ten.vercel.app",
-   "https://lawai-backend.vercel.app",
+    "https://lawai-frontend-ten.vercel.app",
+    "https://lawai-backend.vercel.app",
     "https://lawai-frontend-git-main-viveks-projects-44c9f3e1.vercel.app",
     "https://lawai-frontend-*.vercel.app"
 ]
@@ -28,6 +30,7 @@ origins = [
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,  # Use specific origins instead of "*"
+    allow_origin_regex=r"https://lawai-frontend-.*\.vercel\.app$",
     allow_credentials=True,
     allow_methods=["GET", "POST", "OPTIONS"],  # Specify allowed methods
     allow_headers=["*"],
@@ -43,10 +46,73 @@ class QuestionRequest(BaseModel):
 class ErrorResponse(BaseModel):
     detail: str
 
+async def fetch_gemini_answer(question: str) -> Optional[str]:
+    """Call Google Gemini API to get an answer as a fallback.
+    Returns the response text or None on failure.
+    """
+    api_key = settings.GEMINI_API_KEY
+    if not api_key:
+        return None
+    url = f"{settings.GEMINI_API_URL}/models/{settings.GEMINI_MODEL}:generateContent?key={api_key}"
+    payload = {
+        "contents": [
+            {
+                "parts": [
+                    {
+                        "text": (
+                            "You are a helpful Indian legal assistant. "
+                            "Answer concisely and accurately. If the question is non-legal, say you don't have enough context.\n\n"
+                            f"Question: {question}"
+                        )
+                    }
+                ]
+            }
+        ]
+    }
+    try:
+        timeout = httpx.Timeout(15.0, connect=5.0)
+        async with httpx.AsyncClient(timeout=timeout) as client:
+            resp = await client.post(url, json=payload)
+            if resp.status_code != 200:
+                return None
+            data = resp.json()
+            # Expected: candidates[0].content.parts[0].text
+            candidates = data.get("candidates") or []
+            if not candidates:
+                return None
+            content = candidates[0].get("content") or {}
+            parts = content.get("parts") or []
+            if not parts:
+                return None
+            text = parts[0].get("text")
+            return text
+    except Exception:
+        return None
+
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
     return {"status": "healthy", "message": "API is running"}
+
+@app.get("/")
+async def root():
+    """Root endpoint with API info and links."""
+    return {
+        "name": settings.PROJECT_NAME,
+        "version": settings.VERSION,
+        "endpoints": {
+            "health": "/health",
+            "legal_qa": "/legal-qa",
+            "qa_pairs": "/api/qa-pairs",
+            "categories": "/api/categories",
+            "docs": "/docs"
+        }
+    }
+
+@app.get("/favicon.ico")
+async def favicon():
+    """Return empty 204 to suppress favicon 404 noise."""
+    return Response(status_code=204)
 
 @app.post("/legal-qa")
 async def legal_qa(request: QuestionRequest):
@@ -63,9 +129,20 @@ async def legal_qa(request: QuestionRequest):
         similar_questions = storage.find_similar_questions(question)
         
         if not similar_questions:
+            # Fallback to Gemini if no local answer
+            gemini_answer = await fetch_gemini_answer(question)
+            if gemini_answer:
+                return {
+                    "answer": gemini_answer,
+                    "confidence": 0.6,
+                    "category": "general",
+                    "source": "gemini"
+                }
             return {
                 "answer": "I apologize, but I couldn't find a suitable answer to your question. Please try rephrasing your question or ask something else.",
-                "confidence or data not found..": 0
+                "confidence": 0,
+                "category": "general",
+                "source": "local"
             }
         
         best_match = similar_questions[0]
